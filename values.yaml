@@ -1,8 +1,9 @@
 controller:
-  # Used for label app.kubernetes.io/component
-  componentName: "jenkins-controller"
+  ## Container Settigns
   image: "jenkins/jenkins"
+  tag: latest
   
+  ## Resource Settings
   resources:
     requests:
       cpu: ".5"
@@ -11,13 +12,16 @@ controller:
       cpu: "1"
       memory: "1Gi"
  
+  ## Java Settings
   javaOpts: "-Duser.timezone=America/New_York"
   
-  # For minikube, set this to NodePort, elsewhere use LoadBalancer
-  # Use ClusterIP if your setup includes ingress controller 
+  ## Service Settings
   serviceType: LoadBalancer
   servicePort: 80
-  # List of plugins to be install during Jenkins controller start
+  
+  ## Plugin Settings
+  installLatestPlugins: true
+  overwritePlugins: true
   installPlugins:
     - kubernetes
     - workflow-aggregator
@@ -28,47 +32,56 @@ controller:
     - credentials-binding
     - blueocean
   
-  # Set to false to download the minimum required version of all dependencies.
-  installLatestPlugins: true
-
-  # Enable to always override the installed plugins with the values of 'controller.installPlugins' on upgrade or redeployment.
-  overwritePlugins: true
-  
+  ## Configuration Secrets settings
   containerEnv:
   - name: SECRETS
     value: /jcasc/secrets
 
+  ## Configuration as Code
   JCasC:
     enabled: true
     defaultConfig: true
+    securityRealm: github
     configScripts:
+    
+      ## Use Github to log in
       security: |
         jenkins:
-          authorizationStrategy:
-            github:
-              adminUserNames: "mount986"
-              allowAnonymousJobStatusPermission: false
-              allowAnonymousReadPermission: false
-              allowCcTrayPermission: false
-              allowGithubWebHookPermission: true
-              authenticatedUserCreateJobPermission: true
-              authenticatedUserReadPermission: true
-              useRepositoryPermissions: true
           securityRealm:
-            github:
-              clientID: 00f6fbb79d108673ead6
-              clientSecret: afd69b6daab695fbd3fa84e9ba8e3f43e3bd21cb
-              githubApiUri: https://api.github.com
-              githubWebUri: https://github.com
-              oauthScopes: "read:org,user:email,repo"
-    
-    securityRealm: github
-    authorizationStrategy: github
-  
+            github:            
+              clientID: ${GITHUB_CLIENT_ID}
+              clientSecret: ${GITHUB_CLIENT_SECRET}
+              githubWebUri: "https://github.com"
+              githubApiUri: "https://api.github.com"
+              oauthScopes: "read:org,user:email,repo"    
+              
+      ## default Job Settings
+      jobs: |
+        jobs:
+        - script: >
+            pipelineJob('Scripted-pipeline') {
+              definition {
+                cpsScm {
+                  scm {
+                    git {
+                      remote {
+                         url('https://github.com/mount986/jenkins-demo.git')
+                      }
+                      branch('*/main')
+                    }
+                  }
+                  lightweight()
+                  scriptPath('Jenkinsfile')      
+                }
+              }
+            }            
+                  
+  ## Auto-reload configuration changes
   sidecars:
     configAutoReload:
       enabled: true
   
+## Default Agent Settings (can be overwritten in the Jenkinsfile)
 agent:
   enabled: true
   image: "jenkins/inbound-agent"
@@ -82,9 +95,14 @@ agent:
   # You may want to change this to true while testing a new image
   alwaysPullImage: true
   
+## Configuration Volumes Settings
 persistence:
+  
+  ## Use the PVC from storage.yaml to persist configurations
   enabled: true
   existingClaim: jenkins-config-pvc
+  
+  ## The mount/volume for storing Configuration Secrets 
   mounts:
   - name: jcasc-secrets
     mountPath: /jcasc/secrets
@@ -93,16 +111,10 @@ persistence:
     secret:
       secretName: jenkins-config-secret
 
-## Install Default RBAC roles and bindings
+## Install Default RBAC roles and bindings (needed for auto-config reloading)
 rbac:
   create: true
 
 serviceAccount:
   create: true
 
-## Backup cronjob configuration
-## Ref: https://github.com/maorfr/kube-tasks
-backup:
-  # Backup must use RBAC
-  # So by enabling backup you are enabling RBAC specific for backup
-  enabled: false
