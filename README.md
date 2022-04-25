@@ -18,13 +18,13 @@
     helm install jenkins-demo jenkins/jenkins -f values.yaml
     ```
 
-3) Get the LoadBalancer Ingress
+3) Get the LoadBalancer Ingress IP
     ```
     kubectl describe service <service name>
     kubectl describe service jenkins-demo
     ```
     
-4) Create/Update the Github OAuth application with Ingress IP:
+4) Create/Update the Github OAuth application with Ingress IP
 
     `https://github.com/settings/applications/<Application ID>`
     
