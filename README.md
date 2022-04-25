@@ -3,7 +3,7 @@
 - Install and configure kubectl
 - Install helm
 - Add Jenkins helm repo (`helm repo add jenkins https://charts.jenkins.io`)
-- Create Github OAuth application (jenkins-config-secret)
+- Create Github OAuth application
 
 # Installation Steps:
 1) Create the Persisten Volume Claim for persisting configurations settings
@@ -15,6 +15,7 @@
 2) Create the Jenkins Configuration Secret with Github OAuth Client ID and Secret
     ```
     kubectl create secret <secret name> generic --from-literal=GITHUB_CLIENT_ID=<Github Client ID> --from-literal=GITHUB_CLIENT_SECRET=<Github Client Secret>
+    kubectl create secret jenkins-config-secret generic --from-literal=GITHUB_CLIENT_ID=######### --from-literal=GITHUB_CLIENT_SECRET=#########
     ```
 
 3) Install Jenkins using the helm chart
