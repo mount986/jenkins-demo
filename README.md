@@ -14,8 +14,8 @@
 
 2) Install Jenkins using the helm chart
     ```
-    helm install <instance-name> <chart> -f <values file>
-    helm install jenkins-demo jenkins/jenkins -f values
+    helm install <instance-name> <chart> -f <configuration overrides file>
+    helm install jenkins-demo jenkins/jenkins -f values.yaml
     ```
 
 3) Get the LoadBalancer Ingress
@@ -25,8 +25,10 @@
     ```
     
 4) Create/Update the Github OAuth application with Ingress IP:
+
     https://github.com/settings/applications/1888818
     
 5) Open Jenkins
-    http://<Ingress IP>:80/login
+
+    `http://<Ingress IP>:80/login`
     
