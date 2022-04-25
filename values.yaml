@@ -1,0 +1,108 @@
+controller:
+  # Used for label app.kubernetes.io/component
+  componentName: "jenkins-controller"
+  image: "jenkins/jenkins"
+  
+  resources:
+    requests:
+      cpu: ".5"
+      memory: "256Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+ 
+  javaOpts: "-Duser.timezone=America/New_York"
+  
+  # For minikube, set this to NodePort, elsewhere use LoadBalancer
+  # Use ClusterIP if your setup includes ingress controller 
+  serviceType: LoadBalancer
+  servicePort: 80
+  # List of plugins to be install during Jenkins controller start
+  installPlugins:
+    - kubernetes
+    - workflow-aggregator
+    - git
+    - configuration-as-code
+    - job-dsl
+    - github-oauth
+    - credentials-binding
+    - blueocean
+  
+  # Set to false to download the minimum required version of all dependencies.
+  installLatestPlugins: true
+
+  # Enable to always override the installed plugins with the values of 'controller.installPlugins' on upgrade or redeployment.
+  overwritePlugins: true
+  
+  containerEnv:
+  - name: SECRETS
+    value: /jcasc/secrets
+
+  JCasC:
+    enabled: true
+    defaultConfig: true
+    configScripts:
+      security: |
+        jenkins:
+          authorizationStrategy:
+            github:
+              adminUserNames: "mount986"
+              allowAnonymousJobStatusPermission: false
+              allowAnonymousReadPermission: false
+              allowCcTrayPermission: false
+              allowGithubWebHookPermission: true
+              authenticatedUserCreateJobPermission: true
+              authenticatedUserReadPermission: true
+              useRepositoryPermissions: true
+          securityRealm:
+            github:
+              clientID: 00f6fbb79d108673ead6
+              clientSecret: afd69b6daab695fbd3fa84e9ba8e3f43e3bd21cb
+              githubApiUri: https://api.github.com
+              githubWebUri: https://github.com
+              oauthScopes: "read:org,user:email,repo"
+    
+    securityRealm: github
+    authorizationStrategy: github
+  
+  sidecars:
+    configAutoReload:
+      enabled: true
+  
+agent:
+  enabled: true
+  image: "jenkins/inbound-agent"
+  resources:
+    requests:
+      cpu: "0.5"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "2Gi"
+  # You may want to change this to true while testing a new image
+  alwaysPullImage: true
+  
+persistence:
+  enabled: true
+  existingClaim: jenkins-config-pvc
+  mounts:
+  - name: jcasc-secrets
+    mountPath: /jcasc/secrets
+  volumes:
+  - name: jcasc-secrets
+    secret:
+      secretName: jenkins-config-secret
+
+## Install Default RBAC roles and bindings
+rbac:
+  create: true
+
+serviceAccount:
+  create: true
+
+## Backup cronjob configuration
+## Ref: https://github.com/maorfr/kube-tasks
+backup:
+  # Backup must use RBAC
+  # So by enabling backup you are enabling RBAC specific for backup
+  enabled: false
