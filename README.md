@@ -28,8 +28,6 @@
 
     `https://github.com/settings/applications/<Application ID>`
     
-    https://github.com/settings/applications/1888818
-    
 5) Open Jenkins
 
     `http://<Ingress IP>:80/login`
