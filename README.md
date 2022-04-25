@@ -26,6 +26,7 @@
     
 4) Create/Update the Github OAuth application with Ingress IP:
 
+    `https://github.com/settings/applications/<Application ID>`
     https://github.com/settings/applications/1888818
     
 5) Open Jenkins
